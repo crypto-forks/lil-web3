@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 /// @title lil gnosis
 /// @author Miguel Piedrafita
-/// @notice An optimised ERC721-based multisig implementation
+/// @notice An optimised ERC712-based multisig implementation
 contract LilGnosis {
 	/// ERRORS ///
 
@@ -39,25 +39,28 @@ contract LilGnosis {
 
 	/// @notice Signature nonce, incremented with each successful execution or state change
 	/// @dev This is used to prevent signature reuse
-	uint256 public nonce;
+	/// @dev Initialised at 1 because it makes the first transaction slightly cheaper
+	uint256 public nonce = 1;
 
 	/// @notice The amount of required signatures to execute a transaction or change the state
 	uint256 public quorum;
 
-	/// @dev The EIP-721 domain separator
+	/// @dev The EIP-712 domain separator
 	bytes32 public immutable domainSeparator;
 
 	/// @notice A list of signers, and wether they're trusted by this contract
 	/// @dev This automatically generates a getter for us!
 	mapping(address => bool) public isSigner;
 
-	/// @dev EIP-721 types for a signature that updates the quorum
-	bytes32 public constant QUORUM_HASH = keccak256('UpdateQuorum(uint256 newQuorum,uint256 nonce)');
+	/// @dev EIP-712 types for a signature that updates the quorum
+	bytes32 public constant QUORUM_HASH =
+		keccak256('UpdateQuorum(uint256 newQuorum,uint256 nonce)');
 
-	/// @dev EIP-721 types for a signature that updates a signer state
-	bytes32 public constant SIGNER_HASH = keccak256('UpdateSigner(address signer,bool shouldTrust,uint256 nonce)');
+	/// @dev EIP-712 types for a signature that updates a signer state
+	bytes32 public constant SIGNER_HASH =
+		keccak256('UpdateSigner(address signer,bool shouldTrust,uint256 nonce)');
 
-	/// @dev EIP-721 types for a signature that executes a transaction
+	/// @dev EIP-712 types for a signature that executes a transaction
 	bytes32 public constant EXECUTE_HASH =
 		keccak256('Execute(address target,uint256 value,bytes payload,uint256 nonce)');
 
@@ -78,7 +81,9 @@ contract LilGnosis {
 
 		domainSeparator = keccak256(
 			abi.encode(
-				keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+				keccak256(
+					'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
+				),
 				keccak256(bytes(name)),
 				keccak256(bytes('1')),
 				block.chainid,
@@ -132,7 +137,11 @@ contract LilGnosis {
 	/// @dev Make sure the signatures are sorted in ascending order by the signer's addresses! Otherwise the verification will fail
 	function setQuorum(uint256 _quorum, Signature[] calldata sigs) public payable {
 		bytes32 digest = keccak256(
-			abi.encodePacked('\x19\x01', domainSeparator, keccak256(abi.encode(QUORUM_HASH, _quorum, nonce++)))
+			abi.encodePacked(
+				'\x19\x01',
+				domainSeparator,
+				keccak256(abi.encode(QUORUM_HASH, _quorum, nonce++))
+			)
 		);
 
 		address previous;

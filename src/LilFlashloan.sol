@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.10;
 
-import 'solmate/tokens/ERC20.sol';
+import { ERC20 } from 'solmate/tokens/ERC20.sol';
 
 /// @title Flash Borrower Interface
 /// @author Miguel Piedrafita
@@ -83,14 +83,15 @@ contract LilFlashloan {
 		token.transfer(address(receiver), amount);
 		receiver.onFlashLoan(token, amount, data);
 
-		if (currentBalance + getFee(token, amount) > token.balanceOf(address(this))) revert TokensNotReturned();
+		if (currentBalance + getFee(token, amount) > token.balanceOf(address(this)))
+			revert TokensNotReturned();
 	}
 
 	/// @notice Calculate the fee owed for the loaned tokens
 	/// @param token The ERC20 token you're receiving your loan on
 	/// @param amount The amount of tokens you're receiving
 	/// @return The amount of tokens you need to pay as a fee
-	function getFee(ERC20 token, uint256 amount) public payable returns (uint256) {
+	function getFee(ERC20 token, uint256 amount) public view returns (uint256) {
 		if (fees[token] == 0) return 0;
 
 		return (amount * fees[token]) / 10_000;

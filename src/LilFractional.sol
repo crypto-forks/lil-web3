@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.10;
 
-import 'solmate/tokens/ERC20.sol';
-import 'solmate/tokens/ERC721.sol';
+import { ERC20 } from 'solmate/tokens/ERC20.sol';
+import { ERC721 } from 'solmate/tokens/ERC721.sol';
 
 /// @title NFT Share Token
 /// @author Miguel Piedrafita
@@ -114,7 +114,7 @@ contract LilFractional {
 	function join(uint256 vaultId) public payable {
 		Vault memory vault = getVault[vaultId];
 
-		if (vault.tokenContract == NFTShare(address(0))) revert VaultNotFound();
+		if (address(vault.tokenContract) == address(0)) revert VaultNotFound();
 
 		delete getVault[vaultId];
 
